@@ -12,12 +12,11 @@ public class JniS1Pass {
 
     public native byte[] makeCommandAPDU(byte[] bArr, String str, String str2);
 
+    static {
+        System.loadLibrary("JniS1Pass");
+        Log.i("JNI", "JNI loaded");
+    }
+
     public JniS1Pass() {
-        try {
-            System.loadLibrary("JniS1Pass");
-            Log.i("JNI", "JNI loaded");
-        } catch (UnsatisfiedLinkError e) {
-            Log.e("JNI","JNI error:" + e);
-        }
     }
 }

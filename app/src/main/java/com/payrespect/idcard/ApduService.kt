@@ -8,7 +8,6 @@ import androidx.lifecycle.MutableLiveData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kr.co.s1.mobilecard.s1mobilecard.JniS1Pass
@@ -28,6 +27,7 @@ class ApduService : HostApduService() {
         // strCardNum = studentcard.sccardid.substring(0, 6) + "9" + studentcard.sccardid.substring(7, 13);
         private var strCardNum : String? = "0000000000000" // Secret
 
+        private const val INS_READ_RECORD = 0xB2.toByte()
         private const val INS_SELECT_FILE = 0xA4.toByte()
         private const val INS_INIT_TRANS = 0x52.toByte()
         private const val INS_INTERNAL_AUTH = 0x82.toByte()
@@ -39,8 +39,6 @@ class ApduService : HostApduService() {
             status.value = "[ KAIST ID Card ]\nCARD_NUM:$strCardNum\n"
         }
     }
-
-    var k: Flow<Unit>? = null
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
@@ -71,6 +69,14 @@ class ApduService : HostApduService() {
         return if(tmp.length % 2 == 1) "0$tmp" else tmp
     }
 
+    // from base source
+    private fun hexStringToByteArray(str: String): ByteArray {
+        val str2 = if(str.length % 2 != 0) str + "0" else str
+        val str3 = str2 + "00"
+        return str3.chunked(2).map{ it.toInt(16).toByte() }.toByteArray()
+    }
+
+    // from base source
     private fun add80Padding(str: String): String {
         val length = str.length % 32
         if (length % 32 != 0) {
@@ -104,6 +110,12 @@ class ApduService : HostApduService() {
         val ins = commandApdu[1]
 
         val responseApdu = when(ins) {
+            INS_READ_RECORD -> {
+                state = 0
+                val tmp = hexStringToByteArray(strCardNum!!).copyOf(18)
+                tmp[16] = 0x90.toByte()
+                tmp
+            }
             INS_SELECT_FILE -> {
                 JniS1Pass().loadKeyFile(S1PASS_KEY)
                 state = 1
@@ -136,6 +148,7 @@ class ApduService : HostApduService() {
             }
         }
         val commandType = when(ins){
+            INS_READ_RECORD -> "READ_RECORD"
             INS_SELECT_FILE -> "SELECT_FILE"
             INS_INIT_TRANS -> "INIT_TRANS"
             INS_INTERNAL_AUTH -> "INTERNAL_AUTH"
