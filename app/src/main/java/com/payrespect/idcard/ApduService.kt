@@ -16,7 +16,7 @@ import kr.co.s1.mobilecard.s1mobilecard.JniS1Pass
 
 class ApduService : HostApduService() {
     companion object {
-        val status : MutableLiveData<String> by lazy {MutableLiveData<String>(INITIAL_PROMPT)}
+        val status : MutableLiveData<String> by lazy {MutableLiveData<String>("")}
 
         private const val S1PASS_KEY = "KeyType:S1PASS\n" +
                 "Version:1.0.0.0\n" +
@@ -26,9 +26,7 @@ class ApduService : HostApduService() {
         private const val STR_SITE_KEY = "cba785a1997d0c35106d24f0d920f407"
 
         // strCardNum = studentcard.sccardid.substring(0, 6) + "9" + studentcard.sccardid.substring(7, 13);
-        private var strCardNum = "0000000000000" // Secret
-
-        private val INITIAL_PROMPT = "[ KAIST ID Card ]\nCARD_NUM:$strCardNum\n"
+        private var strCardNum : String? = "0000000000000" // Secret
 
         private const val INS_SELECT_FILE = 0xA4.toByte()
         private const val INS_INIT_TRANS = 0x52.toByte()
@@ -89,7 +87,7 @@ class ApduService : HostApduService() {
     private var s1pass : JniS1Pass? = null
 
     private fun jniCall(commandApdu: ByteArray): ByteArray? {
-        val personalInfo = add80Padding("9999999916${intToHex(strCardNum.length)}${toHex(strCardNum.toByteArray())}00")
+        val personalInfo = add80Padding("9999999916${intToHex(strCardNum!!.length)}${toHex(strCardNum!!.toByteArray())}00")
         if(s1pass == null){
             s1pass = JniS1Pass()
         }
@@ -98,7 +96,7 @@ class ApduService : HostApduService() {
     }
 
     override fun processCommandApdu(commandApdu: ByteArray?, extras: Bundle?): ByteArray? {
-        if(commandApdu == null){
+        if(commandApdu == null || strCardNum == null){
             return byteArrayOf()
         }
 

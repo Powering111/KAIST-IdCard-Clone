@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
@@ -63,7 +64,15 @@ class MainActivity : ComponentActivity() {
                     var cardNumInput by remember { mutableStateOf("") }
 
                     LaunchedEffect(Unit) {
-                        cardNumInput = dataStore.data.first()[stringPreferencesKey("K")] ?: "0000000000000"
+                        val cardNum = dataStore.data.first()[stringPreferencesKey("K")]
+                        if(cardNum == null){
+                            ApduService.status.value = "Please input card number"
+                            cardNumInput = ""
+                        }
+                        else{
+                            ApduService.changeCardNum(cardNum)
+                            cardNumInput = cardNum
+                        }
                     }
 
                     Column(
@@ -77,6 +86,11 @@ class MainActivity : ComponentActivity() {
                                 })
                             }
                     ) {
+                        Text(
+                            text = "KAIST Id Card",
+                            fontSize = 30.sp,
+                            fontWeight = FontWeight.Bold,
+                        )
                         OutlinedTextField(
                             value = cardNumInput,
                             onValueChange = { value ->
