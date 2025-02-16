@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Id Card</string>
+    <string name="desc1">KAIST ID Card</string>
+    <string name="desc2">ID Card</string>
+</resources>
